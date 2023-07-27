@@ -9,22 +9,24 @@ from fastapi.templating import Jinja2Templates
 from langchain.vectorstores import VectorStore
 
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from query_data import get_chain
+from llama2 import get_chain
 from schemas import ChatResponse
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="templates"
+                            # , model_kwargs={'temperature':0}
+                            )
 vectorstore: Optional[VectorStore] = None
 
 
-@app.on_event("startup")
-async def startup_event():
-    logging.info("loading vectorstore")
-    if not Path("vectorstore.pkl").exists():
-        raise ValueError("vectorstore.pkl does not exist, please run ingest.py first")
-    with open("vectorstore.pkl", "rb") as f:
-        global vectorstore
-        vectorstore = pickle.load(f)
+# @app.on_event("startup")
+# async def startup_event():
+#     logging.info("loading vectorstore")
+#     if not Path("vectorstore.pkl").exists():
+#         raise ValueError("vectorstore.pkl does not exist, please run ingest.py first")
+#     with open("vectorstore.pkl", "rb") as f:
+#         global vectorstore
+#         vectorstore = pickle.load(f)
 
 
 @app.get("/")
@@ -38,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket):
     question_handler = QuestionGenCallbackHandler(websocket)
     stream_handler = StreamingLLMCallbackHandler(websocket)
     chat_history = []
-    qa_chain = get_chain(vectorstore, question_handler, stream_handler)
+    qa_chain = get_chain(question_handler, stream_handler)
     # Use the below line instead of the above line to enable tracing
     # Ensure `langchain-server` is running
     # qa_chain = get_chain(vectorstore, question_handler, stream_handler, tracing=True)
@@ -57,7 +59,8 @@ async def websocket_endpoint(websocket: WebSocket):
             result = await qa_chain.acall(
                 {"question": question, "chat_history": chat_history}
             )
-            chat_history.append((question, result["answer"]))
+            print(result)
+            chat_history.append((question, result["text"]))
 
             end_resp = ChatResponse(sender="bot", message="", type="end")
             await websocket.send_json(end_resp.dict())

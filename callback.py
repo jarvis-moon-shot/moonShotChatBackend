@@ -1,8 +1,8 @@
 """Callback handlers used in the app."""
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from langchain.callbacks.base import AsyncCallbackHandler
-
 from schemas import ChatResponse
 
 
@@ -31,3 +31,7 @@ class QuestionGenCallbackHandler(AsyncCallbackHandler):
             sender="bot", message="Synthesizing question...", type="info"
         )
         await self.websocket.send_json(resp.dict())
+
+
+    async def on_llm_end(self, output,  **kwargs: Any) -> None:
+        print("inside questioncallback:" ,output)
