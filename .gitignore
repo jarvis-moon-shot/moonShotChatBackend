@@ -137,3 +137,11 @@ dmypy.json
 
 vectorstore.pkl
 langchain.readthedocs.io/
+chat/bin/activate
+chat/bin/activate.csh
+chat/bin/activate.fish
+chat/bin/Activate.ps1
+chat/bin/python
+chat/bin/python3
+chat/bin/python3.10
+chat/pyvenv.cfg
